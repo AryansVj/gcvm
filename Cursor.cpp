@@ -12,7 +12,8 @@ int main()
         char g = getch();
 		int x, y;
 		POINT xypos;
-
+ 
+       // Cursor will go to the entered position
         if (g == 'S' || g == 's')
 		{
 			cout<<"Enter the new position:"<<endl;
@@ -27,7 +28,7 @@ int main()
 		}
 
 
-
+        
 
     }
 
