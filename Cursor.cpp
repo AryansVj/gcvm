@@ -16,7 +16,7 @@ int main()
        // Cursor will go to the entered position
         if (g == 'S' || g == 's')
 		{
-			cout<<"Enter the new position:"<<endl;
+			cout<<"Enter the new position:"<<endl;                     //Enter position as seperated by space
 			cin>>x>>y;
 			SetCursorPos(x, y);
 		}
@@ -26,7 +26,12 @@ int main()
 			GetCursorPos(&xypos);
 			cout<<"X:"<<xypos.x<<"\tY:"<<xypos.y<<endl;
 		}
+        
 
+		else if (g == 'x' || g == 'X')
+		{
+			break;
+		}
 
         
 
