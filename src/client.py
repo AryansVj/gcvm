@@ -7,6 +7,14 @@ mouse = Controller()
 SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
+#variables
+rigthbutton = 0
+leftbutton = 0
+x = 0
+y =0
+scroll =0
+scrolllength =0
+
 # Discovering and finding the device
 async def scan_for_device():
     devices = await BleakScanner.discover()
@@ -29,8 +37,22 @@ async def scan_for_device():
 def notification_callback(sender: int, data: bytearray):
     feed = data.hex()
     print(f"Notification received {feed}")
-    time_count = 0
+
+    mouse.move(x,y)
+
+    # click the mouse
+    time = 1         # time the button clicks
+    if(rigthbutton == 1):
+        mouse.click(Button.right, time)
+    elif(leftbutton == 1):
+        mouse.click(Button.left, time)
+    elif(scroll == 1):
+        mouse.scroll(0,scrolllength)
+    
+
 '''
+    time_count = 0
+
     while time_count < 10:
         #take the position of the mouse
         pos = mouse.position
