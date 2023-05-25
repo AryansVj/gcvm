@@ -22,36 +22,42 @@ async def scan_for_device():
             return device
     return None
 
+# Callback function to handle data received by notifications
+def notification_callback(sender: int, data: bytearray):
+    print(f"Notification received from characteristic {sender}: {data}")
+
 async def interact_with_device(device):
     async with BleakClient(device) as client:
         # Check if the service with the specified UUID is available
+        service = None
         for s in client.services:
             if s.uuid.lower() == SERVICE_UUID.lower():
                 service = s
-            print("Service Matchd")
-
+                print("Service Matchd")
+                break
+            
+        if service is None:
+            await client.disconnect()
+            print("No matching service found. Client Disconnected")
+        
+        else:
             # Check if the characteristic with the specified UUID is available in the service
-            if CHARACTERISTIC_UUID.lower() in service.characteristics:
-                characteristic = service.characteristics[CHARACTERISTIC_UUID.lower()]
-                print("Characteristic Matchd")
+            for c in service.characteristics:
+                if c.uuid.lower() == CHARACTERISTIC_UUID.lower():
+                    characteristic = c
+                    print("Characteristic Matchd")
 
                 # Enable notifications for the characteristic
-                await client.start_notify(characteristic)
+                await client.start_notify(characteristic, notification_callback)
 
                 # Receive characteristic value as the device notifies for 10 seconds
-                end_time = asyncio.get_event_loop().time() + 10.0
-                while asyncio.get_event_loop().time() < end_time:
-                    notification = await client.wait_for_notification()
-                    value = notification.data
-                    print(f"Received value: {value}")
+                time_count = 0
+                while time_count < 10:
+                    await asyncio.sleep(1)
+                    time_count += 1
 
                 # Disconnect from the device after 10 seconds
                 await client.disconnect()
-        else:
-            for service in client.services:
-                print(service.uuid)
-            print("Unmatched Service, Disconnecting")
-            await client.disconnect()
 
 async def main():
     print("Discovering...")
