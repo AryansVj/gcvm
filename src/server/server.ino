@@ -27,7 +27,7 @@ void setup() {
   Serial.begin(115200);
 
   // Create the BLE Device
-  BLEDevice::init("VIRAJ");
+  BLEDevice::init("GCVM_Server");
 
   // Create the BLE Server
   pServer = BLEDevice::createServer();
@@ -60,6 +60,7 @@ void setup() {
 void loop() {
     // notify changed value
     if (deviceConnected) {
+        Serial.println(value);
         pCharacteristic->setValue((uint8_t*)&value, 4);
         pCharacteristic->notify();
         value++;

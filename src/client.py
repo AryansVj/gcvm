@@ -5,6 +5,7 @@ from bleak import BleakScanner, BleakClient
 SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
+# Discovering and finding the device
 async def scan_for_device():
     devices = await BleakScanner.discover()
     if len(devices) == 0:
@@ -16,7 +17,7 @@ async def scan_for_device():
             print("Device name is None")
             continue
 
-        if "VIRAJ" in device.name:
+        if "GCVM_Server" in device.name:
             print("Device found")
             print(f"Device is {device}")
             return device
@@ -24,7 +25,8 @@ async def scan_for_device():
 
 # Callback function to handle data received by notifications
 def notification_callback(sender: int, data: bytearray):
-    print(f"Notification received from characteristic {sender}: {data}")
+    feed = data.hex()
+    print(f"Notification received {feed}")
 
 async def interact_with_device(device):
     async with BleakClient(device) as client:
@@ -58,6 +60,7 @@ async def interact_with_device(device):
 
                 # Disconnect from the device after 10 seconds
                 await client.disconnect()
+                print("Client Disconnected")
 
 async def main():
     print("Discovering...")
