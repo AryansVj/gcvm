@@ -17,5 +17,6 @@ mouse.click(Button.left, time)
 '''
 # click nonstop
 mouse.press(Button.right)
-mouse.press(Button.right)
+mouse.release(Button.right)
 '''
+
