@@ -1,5 +1,7 @@
 import asyncio
 from bleak import BleakScanner, BleakClient
+from pynput.mouse import Button,Controller
+mouse = Controller()
 
 # UUID of the service and characteristic to interact with
 SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -27,6 +29,16 @@ async def scan_for_device():
 def notification_callback(sender: int, data: bytearray):
     feed = data.hex()
     print(f"Notification received {feed}")
+    time_count = 0
+'''
+    while time_count < 10:
+        #take the position of the mouse
+        pos = mouse.position
+        print(pos)
+        
+        time_count += 1
+'''                
+
 
 async def interact_with_device(device):
     async with BleakClient(device) as client:
