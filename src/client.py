@@ -25,8 +25,9 @@ async def scan_for_device():
 async def interact_with_device(device):
     async with BleakClient(device) as client:
         # Check if the service with the specified UUID is available
-        if SERVICE_UUID.lower() in client.services:
-            service = client.services[SERVICE_UUID.lower()]
+        for s in client.services:
+            if s.uuid.lower() == SERVICE_UUID.lower():
+                service = s
             print("Service Matchd")
 
             # Check if the characteristic with the specified UUID is available in the service
