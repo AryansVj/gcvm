@@ -20,3 +20,5 @@ mouse.press(Button.right)
 mouse.release(Button.right)
 '''
 
+mouse.scroll(0,-100)
+mouse.scroll(0,+100)
