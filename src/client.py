@@ -37,16 +37,20 @@ async def scan_for_device():
 def notification_callback(sender: int, data: bytearray):
     feed = data.hex()
     print(f"Notification received {feed}")
+    print(data)
 
     mouse.move(x,y)
 
-    # click the mouse
-    time = 1         # time the button clicks
-    if(rigthbutton == 1):
-        mouse.click(Button.right, time)
-    elif(leftbutton == 1):
-        mouse.click(Button.left, time)
+    if(scroll == 0):
+        # click the mouse
+        time = 1         # time the button clicks
+        if(rigthbutton == 1):
+            mouse.click(Button.right, time)
+        elif(leftbutton == 1):
+            mouse.click(Button.left, time)
+
     elif(scroll == 1):
+        scrolllength = x
         mouse.scroll(0,scrolllength)
     
 
