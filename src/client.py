@@ -39,24 +39,34 @@ def notification_callback(sender: int, data: bytearray):
     feed = data.hex()
     print(f"Notification received {feed}")
     print(data)
-
+    Xval = int(int(feed[6:8], 16))*8
+    Yval = int(int(feed[4:6], 16))*8
+    click = int(feed[3:4])
     
+    if click == 1:
+        print("Left")
+    elif click == 2:
+        print("Right")
+    elif click == 4:
+        print("Scroll")
+    else:
+        print("Invalid")
+    
+    print(f"X value {Xval} | Y value {Yval}")
 
+    pg.moveTo(Xval,Yval)
 
-
-    pg.moveTo(x,y)
-
-    if(scroll == 0):
+    if(click < 4):
         # click the mouse
         time = 1         # time the button clicks
-        if(rigthbutton == 1):
+        if(click == 2):
             mouse.click(Button.right, time)
-        elif(leftbutton == 1):
+        elif(click == 1):
             mouse.click(Button.left, time)
 
-    elif(scroll == 1):
+    elif(click == 4):
         scrolllength = x
-        pg.scroll(-1000)
+        pg.scroll(-1*(Yval-500))
     
 
 '''
@@ -97,7 +107,7 @@ async def interact_with_device(device):
 
                 # Receive characteristic value as the device notifies for 10 seconds
                 time_count = 0
-                while time_count < 10:
+                while time_count < 80:
                     await asyncio.sleep(1)
                     time_count += 1
 
