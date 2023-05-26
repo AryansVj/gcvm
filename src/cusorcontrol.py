@@ -1,5 +1,6 @@
 from pynput.mouse import Button,Controller
 mouse = Controller()
+import pyautogui as pg
 
 #take the position of the mouse
 pos = mouse.position
@@ -20,5 +21,5 @@ mouse.press(Button.right)
 mouse.release(Button.right)
 '''
 
-mouse.scroll(0,-100)
-mouse.scroll(0,+100)
+pg.scroll(0,-100)
+pg.scroll(-1000)

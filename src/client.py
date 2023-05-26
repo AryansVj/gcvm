@@ -2,6 +2,7 @@ import asyncio
 from bleak import BleakScanner, BleakClient
 from pynput.mouse import Button,Controller
 mouse = Controller()
+import pyautogui as pg
 
 # UUID of the service and characteristic to interact with
 SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -10,8 +11,8 @@ CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 #variables
 rigthbutton = 0
 leftbutton = 0
-x,xvalue = 0
-y =0
+x = 100
+y = 100
 scroll =0
 scrolllength =0
 
@@ -43,7 +44,7 @@ def notification_callback(sender: int, data: bytearray):
 
 
 
-    mouse.move(x,y)
+    pg.moveTo(x,y)
 
     if(scroll == 0):
         # click the mouse
@@ -55,7 +56,7 @@ def notification_callback(sender: int, data: bytearray):
 
     elif(scroll == 1):
         scrolllength = x
-        mouse.scroll(0,scrolllength)
+        pg.scroll(-1000)
     
 
 '''
