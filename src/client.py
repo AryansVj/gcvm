@@ -10,7 +10,7 @@ CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 #variables
 rigthbutton = 0
 leftbutton = 0
-x = 0
+x,xvalue = 0
 y =0
 scroll =0
 scrolllength =0
@@ -38,6 +38,10 @@ def notification_callback(sender: int, data: bytearray):
     feed = data.hex()
     print(f"Notification received {feed}")
     print(data)
+
+    
+
+
 
     mouse.move(x,y)
 
