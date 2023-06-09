@@ -1,9 +1,20 @@
 import asyncio
 from bleak import BleakScanner, BleakClient
+from pynput.mouse import Button,Controller
+mouse = Controller()
+import pyautogui as pg
 
 # UUID of the service and characteristic to interact with
 SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+
+#variables
+rigthbutton = 0
+leftbutton = 0
+x = 100
+y = 100
+scroll =0
+scrolllength =0
 
 # Discovering and finding the device
 async def scan_for_device():
@@ -27,6 +38,48 @@ async def scan_for_device():
 def notification_callback(sender: int, data: bytearray):
     feed = data.hex()
     print(f"Notification received {feed}")
+    print(data)
+    Xval = int(int(feed[6:8], 16))*8
+    Yval = int(int(feed[4:6], 16))*8
+    click = int(feed[3:4])
+    
+    if click == 1:
+        print("Left")
+    elif click == 2:
+        print("Right")
+    elif click == 4:
+        print("Scroll")
+    else:
+        print("Invalid")
+    
+    print(f"X value {Xval} | Y value {Yval}")
+
+    pg.moveTo(Xval,Yval)
+
+    if(click < 4):
+        # click the mouse
+        time = 1         # time the button clicks
+        if(click == 2):
+            mouse.click(Button.right, time)
+        elif(click == 1):
+            mouse.click(Button.left, time)
+
+    elif(click == 4):
+        scrolllength = x
+        pg.scroll(-1*(Yval-500))
+    
+
+'''
+    time_count = 0
+
+    while time_count < 10:
+        #take the position of the mouse
+        pos = mouse.position
+        print(pos)
+        
+        time_count += 1
+'''                
+
 
 async def interact_with_device(device):
     async with BleakClient(device) as client:
@@ -54,7 +107,7 @@ async def interact_with_device(device):
 
                 # Receive characteristic value as the device notifies for 10 seconds
                 time_count = 0
-                while time_count < 10:
+                while time_count < 80:
                     await asyncio.sleep(1)
                     time_count += 1
 
