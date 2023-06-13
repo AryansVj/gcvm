@@ -38,7 +38,9 @@ int Xangle = 0;
 int Yangle = 0;
 int Zangle = 0;
 
-
+int MappedX = 0; 
+int MappedY = 0;
+int MappedZ = 0;
 
 // Bluetooth 
 BLEServer* pServer = NULL;
@@ -46,7 +48,7 @@ BLECharacteristic* pCharacteristic = NULL;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 uint32_t value = 0;
-uint8_t val_cast = 0;
+uint8_t* val_cast = 0;
 
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
@@ -134,22 +136,23 @@ void loop() {
   int Yangle = mpu6050.getAngleY();
   int Zangle = mpu6050.getAngleZ();
 
-  if(MouseVector[0]<1060 &&  MouseVector[0]>= 100  ){
+
+  if(MouseVector[0]<2000 &&  MouseVector[0]>= 100  ){
     MouseVector[0]= MouseVector[0]+ Xangle;
   } else if( Xangle >0 && MouseVector[0]<=100){
     MouseVector[0]= MouseVector[0]+ Xangle; 
-  } else if (Xangle <0 && MouseVector[0]>=1060){
+  } else if (Xangle <0 && MouseVector[0]>=2000){
     MouseVector[0]= MouseVector[0]+ Xangle;
   } else {
     MouseVector[0]= MouseVector[0];
   }
   
   
-  if(MouseVector[1]<640 &&  MouseVector[1]>=100  ){
+  if(MouseVector[1]<1150 &&  MouseVector[1]>=100  ){
     MouseVector[1]= MouseVector[1]+ Yangle;
   } else if( Yangle > 0 && MouseVector[1]<=100){
     MouseVector[1]= MouseVector[1]+ Yangle; 
-  } else if (Yangle <0 && MouseVector[1]>=640){
+  } else if (Yangle <0 && MouseVector[1]>=1150){
     MouseVector[1]= MouseVector[1]+ Yangle;
   } else {
     MouseVector[1]= MouseVector[1];
@@ -197,42 +200,109 @@ void loop() {
   } else {
     ScrollClick = 0;
   }
+///////////////////////////////////////////////////////////////
+  // mapping the co ordinate values to usable X,Y cordinates 
+  
+  if(MouseVector[0]<100){
+    MappedX = 0;
+  } else if(MouseVector[0]> 2000){
+    MappedX = 1915 ;
+  } else{
+    MappedX = MouseVector[0]-100 ;
+  }
+  
+   if(MouseVector[1]<100){
+    MappedY = 0;
+  } else if(MouseVector[1]> 1150){
+    MappedY = 1050;
+  } else{
+    MappedY = MouseVector[1]-100 ;
+  }
+
+  /////////////////////////////////////////////////////////////////
+
+
+  Serial.print(" MappedX: ");
+  Serial.print(MappedX);
+  Serial.print(" MappedY : ");
+  Serial.println(MappedY);
+
+
   //////////////////////////////////////////
 
-  Serial.print("Xvalue  : ");
-  Serial.print(MouseVector[0]);
-  Serial.print("\tYvalue : ");
-  Serial.print(MouseVector[1]);
-  Serial.print("\tZvalue  : ");
-  Serial.println(MouseVector[2]);
+  // Serial.print("Xvalue  : ");
+  // Serial.print(MouseVector[0]);
+  // Serial.print("\tYvalue : ");
+  // Serial.print(MouseVector[1]);
+  // Serial.print("\tZvalue  : ");
+  // Serial.println(MouseVector[2]);
 
   //////////////////////////////////////////
   
-  //Serial.print("Left Click  : ");
- // Serial.print(LeftClick);
-  //Serial.print("\tRight Click : ");
-  //Serial.print(RightClick);
-  //Serial.print("\tScroll Click : ");
- // Serial.println(ScrollClick);
+  Serial.print("Left Click  : ");
+  Serial.print(LeftClick);
+  Serial.print("\tRight Click : ");
+  Serial.print(RightClick);
+  Serial.print("\tScroll Click : ");
+  Serial.println(ScrollClick);
 
 
-  ///////////////////////////////////////////
+//  ///////////////////////////////////////////
+//
+  Serial.print("angleX : ");
+  Serial.print(mpu6050.getAngleX());
+  Serial.print("\tangleY : ");
+  Serial.print(mpu6050.getAngleY());
+  Serial.print("\tangleZ : ");
+  Serial.println(mpu6050.getAngleZ());
 
-  //Serial.print("angleX : ");
-  //Serial.print(mpu6050.getAngleX());
-  //Serial.print("\tangleY : ");
-  //Serial.print(mpu6050.getAngleY());
-  //Serial.print("\tangleZ : ");
-  //Serial.println(mpu6050.getAngleZ());
+  uint8_t byte1 = MappedX/8;
+  uint8_t byte2 = MappedY/8;
+  uint8_t byte3 = 0b00000000;
 
-  value = MouseVector[0];
+  byte3 |= ScrollClick;
+  byte3 <<= 1;
+  byte3 |= RightClick;
+  byte3 <<= 1;
+  byte3 |= LeftClick;
+  
+  Serial.print("X cord: ");
+  Serial.print(byte1);
+  Serial.print(" | Y cord: ");
+  Serial.print(byte2);
+  Serial.print(" | Clicks: ");
+  Serial.print(byte3);
+  Serial.println("");
+  
+  // Shift the bytes and create the 32-bit value
+  value = 0;
+  value |= (uint32_t)byte1 << 24;
+  value |= (uint32_t)byte2 << 16;
+  value |= (uint32_t)byte3 << 8;
+
+  // value = MouseVector[0];
    // notify changed value
    if (deviceConnected) {
-        Serial.println(value);
         val_cast = (uint8_t*)&value;
-        Serial.println(val_cast);
         pCharacteristic->setValue(val_cast, 4);
         pCharacteristic->notify();
+
+        pCharacteristic->setValue((uint8_t*)&value, 4);
+
+        // Get the characteristic value as a byte array
+        std::string characteristicValue = pCharacteristic->getValue();
+        
+        // Print the characteristic value as a byte array
+        Serial.print("Value: ");
+        Serial.print(value);
+        
+        Serial.println("");
+        Serial.print("Characteristic value: ");
+        for (size_t i = 0; i < characteristicValue.length(); i++) {
+          Serial.print(characteristicValue[i], HEX);
+          Serial.print(" ");
+        };
+        Serial.println("");
         ////value++;
         
         delay(3); // 
