@@ -45,12 +45,13 @@ while running:
 
     # Update the position and color of the animated object based on input values
     try: 
-        # x_data += float(vals[0])*0.01    
-        # y_data += float(vals[1])*0.01
+        x_data += float(vals[0])*20    
+        y_data -= float(vals[1])*20
 
-        x_data = centerX + float(vals[0])
-        y_data = centerY + float(vals[1])
-        color = (120, 250*(float(vals[3])), 250*(float(vals[4])))
+        # x_data = centerX + float(vals[3])
+        # y_data = centerY + float(vals[4])
+
+        color = (255*(0.5 + float(vals[-1])/2), 250*(float(vals[-3])), 250*(float(vals[-2])))
         print(vals)
     except:
         continue
@@ -63,6 +64,10 @@ while running:
 
     # Control the y_data rate
     clock.tick(60)
+
+    # Quiting Mechanism (Tap all three touches)
+    if int(vals[-3]) == 1 and float(vals[-2]) == 1 and float(vals[-1]) == 1:
+        running = False
 
 # Quit pygame
 pygame.quit()
