@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from time import sleep
 
-port = "COM6"
+port = "COM16"
 baud_rate = 9600
 
 ser = serial.Serial(port, baud_rate)
@@ -41,13 +41,12 @@ while running:
 
     # Update the position and color of the animated object based on input values
     try: 
-        x_data += float(vals[0])*30    
-        y_data += float(vals[1])*30
+        x_data += float(vals[0])*20    
+        y_data += float(vals[1])*20
+        color = (120, 250*(float(vals[3])), 250*(float(vals[4])))
         print(vals)
     except:
         continue
-
-    color = (220,50,80)
 
     # Draw the animated object
     pygame.draw.circle(window, color, (x_data, y_data), 10)
@@ -56,7 +55,7 @@ while running:
     pygame.display.flip()
 
     # Control the y_data rate
-    clock.tick(30)
+    clock.tick(60)
 
 # Quit pygame
 pygame.quit()
