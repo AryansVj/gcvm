@@ -13,15 +13,19 @@ period = 100
 
 pygame.init()
 
-WIDTH = 800
+WIDTH = 1000
 HEIGHT = 600
 
 window = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Simple Animation")
 clock = pygame.time.Clock()
 
-x_data = WIDTH // 2
-y_data = HEIGHT // 2
+centerX = WIDTH // 2
+centerY = HEIGHT // 2
+
+x_data = centerX
+y_data = centerY
+
 color = (255, 0, 0)
 
 running = True
@@ -41,8 +45,11 @@ while running:
 
     # Update the position and color of the animated object based on input values
     try: 
-        x_data += float(vals[0])*20    
-        y_data += float(vals[1])*20
+        # x_data += float(vals[0])*0.01    
+        # y_data += float(vals[1])*0.01
+
+        x_data = centerX + float(vals[0])
+        y_data = centerY + float(vals[1])
         color = (120, 250*(float(vals[3])), 250*(float(vals[4])))
         print(vals)
     except:
