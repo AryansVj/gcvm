@@ -45,14 +45,24 @@ while running:
 
     # Update the position and color of the animated object based on input values
     try: 
-        x_data += float(vals[0])*20    
-        y_data -= float(vals[1])*20
+        # X-Y Acceleration - Approaches Steady state
+        # x_data += float(vals[0])*20    
+        # y_data += float(vals[1])*20
 
+        # X-Y Acceleration Angle - Approaches Steady state
+        # x_data += float(vals[6])*0.1    
+        # y_data += (float(vals[7]))*0.1
+
+        # Gyro acceleration (X-Y)
         # x_data = centerX + float(vals[3])
         # y_data = centerY + float(vals[4])
+        
+        # Gyro Angles
+        # x_data = centerX + float(vals[8])
+        # y_data = centerY + float(vals[9])
 
         color = (255*(0.5 + float(vals[-1])/2), 250*(float(vals[-3])), 250*(float(vals[-2])))
-        print(vals)
+        print(vals[8:11])
     except:
         continue
 
