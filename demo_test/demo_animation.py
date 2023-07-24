@@ -3,13 +3,16 @@ import random
 import serial
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from time import sleep
+import time
 
 port = "COM16"
 baud_rate = 9600
 
-ser = serial.Serial(port, baud_rate)
-period = 100
+# ser = serial.Serial(port, baud_rate)
+# period = 100
+
+file_name = "trial2_data.txt"
+fh = open(file_name)
 
 pygame.init()
 
@@ -29,7 +32,10 @@ y_data = centerY
 color = (255, 0, 0)
 
 running = True
-while running:
+end = False
+count = 0
+
+while running and end == False:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -37,17 +43,24 @@ while running:
     # Clear the screen
     window.fill((0, 0, 0))
 
+
     try:
-        data = ser.readline().decode().rstrip()  # Read a line of serial data
-        vals = data.split(" : ")
+        # data = ser.readline().decode().rstrip()  # Read a line of serial data
+        data = fh.readline().rstrip()   # Read a line from text data file
+        vals = data.split(" : ")[1:]
+        count+=1
+        if len(data) < 1:
+            end = True
+
     except:
         continue
 
+    time.sleep(0.01)   
     # Update the position and color of the animated object based on input values
     try: 
         # X-Y Acceleration - Approaches Steady state
-        # x_data += float(vals[0])*20    
-        # y_data += float(vals[1])*20
+        x_data += float(vals[0])*5
+        y_data += float(vals[1])*5
 
         # X-Y Acceleration Angle - Approaches Steady state
         # x_data += float(vals[6])*0.1    
@@ -61,10 +74,12 @@ while running:
         # x_data = centerX + float(vals[8])
         # y_data = centerY + float(vals[9])
 
-        color = (255*(0.5 + float(vals[-1])/2), 250*(float(vals[-3])), 250*(float(vals[-2])))
-        print(vals[8:11])
+        # color = (255*(0.5 + float(vals[-1])/2), 250*(float(vals[-3])), 250*(float(vals[-2])))
+        # print(vals[8:11])
     except:
         continue
+
+    print("Going to Draw. Count: ", count)
 
     # Draw the animated object
     pygame.draw.circle(window, color, (x_data, y_data), 10)
@@ -76,8 +91,13 @@ while running:
     clock.tick(60)
 
     # Quiting Mechanism (Tap all three touches)
-    if int(vals[-3]) == 1 and float(vals[-2]) == 1 and float(vals[-1]) == 1:
-        running = False
+    # if int(vals[-3]) == 1 and float(vals[-2]) == 1 and float(vals[-1]) == 1:
+    #     running = False
 
 # Quit pygame
 pygame.quit()
+
+fh.close()
+
+print('\n')
+print("Count ", count)
