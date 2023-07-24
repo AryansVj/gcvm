@@ -34,6 +34,10 @@ color = (255, 0, 0)
 running = True
 end = False
 count = 0
+acc = []
+accAng = []
+gyroAcc = []
+gyroAng = []
 
 while running and end == False:
     for event in pygame.event.get():
@@ -67,8 +71,8 @@ while running and end == False:
         y_data[1] = centerY + (float(vals[7]))
 
         # Gyro acceleration (X-Y)
-        x_data[2] += float(vals[3])*0.5
-        y_data[2] += float(vals[4])*0.5
+        # x_data[2] += float(vals[3])*0.5
+        # y_data[2] += float(vals[4])*0.5
         
         # Gyro Angles
         x_data[3] = centerX + float(vals[8])
@@ -81,10 +85,32 @@ while running and end == False:
 
     print(x_data, y_data, "Count: ", count)
 
+    acc.append((x_data[0], y_data[0]))
+    accAng.append((x_data[1], y_data[1]))
+    gyroAcc.append((float(vals[3]), float(vals[4])))
+    gyroAng.append((x_data[3], y_data[3]))
+
     # Draw the animated object
-    x = x_data[0]*0.5 + x_data[1]*0.1 + x_data[2]*0.1 + x_data[3]*0.2
-    y = y_data[0]*0.5 + y_data[1]*0.1 + y_data[2]*0.1 + y_data[3]*0.2
-    
+    if count < 5:
+        x_data[2] = centerX
+        y_data[2] = centerY
+        pass
+    else:
+        x_data[0] = 0.25*(acc[count-1][0] + acc[count-2][0] + acc[count-3][0] + acc[count-4][0])
+        y_data[0] = 0.25*(acc[count-1][1] + acc[count-2][1] + acc[count-3][1] + acc[count-4][1])
+        
+        x_data[1] = 0.25*(accAng[count-1][0] + accAng[count-2][0] + accAng[count-3][0] + accAng[count-4][0])
+        y_data[1] = 0.25*(accAng[count-1][1] + accAng[count-2][1] + accAng[count-3][1] + accAng[count-4][1])
+
+        x_data[3] = 0.25*(gyroAng[count-1][0] + gyroAng[count-2][0] + gyroAng[count-3][0] + gyroAng[count-4][0])
+        y_data[3] = 0.25*(gyroAng[count-1][1] + gyroAng[count-2][1] + gyroAng[count-3][1] + gyroAng[count-4][1])
+
+        x_data[2] = x_data[2] + (gyroAcc[count-1][0] - gyroAcc[count-2][0])
+        y_data[2] = y_data[2] + (gyroAcc[count-1][1] - gyroAcc[count-2][1])
+
+        x = x_data[0]*0.5 + x_data[1]*0.1 + x_data[2]*0.1 + x_data[3]*0.2
+        y = y_data[0]*0.5 + y_data[1]*0.1 + y_data[2]*0.1 + y_data[3]*0.2
+        
     pygame.draw.circle(window, (255, 255, 255), (x, y), 10)
 
     pygame.draw.circle(window, (100, 0, 0), (x_data[0], y_data[0]), 10)
