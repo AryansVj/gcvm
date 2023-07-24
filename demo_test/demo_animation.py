@@ -59,16 +59,16 @@ while running and end == False:
     # Update the position and color of the animated object based on input values
     try: 
         # X-Y Acceleration - Approaches Steady state
-        y_data[0] = centerY - float(vals[0])
-        x_data[0] = centerX + float(vals[1])
+        y_data[0] = centerY - float(vals[0])*50
+        x_data[0] = centerX + float(vals[1])*50
 
         # X-Y Acceleration Angle - Approaches Steady state
         x_data[1] = centerX + float(vals[6])    
         y_data[1] = centerY + (float(vals[7]))
 
         # Gyro acceleration (X-Y)
-        x_data[2] += float(vals[3])
-        y_data[2] += float(vals[4])
+        x_data[2] += float(vals[3])*0.5
+        y_data[2] += float(vals[4])*0.5
         
         # Gyro Angles
         x_data[3] = centerX + float(vals[8])
@@ -82,6 +82,11 @@ while running and end == False:
     print(x_data, y_data, "Count: ", count)
 
     # Draw the animated object
+    x = x_data[0]*0.5 + x_data[1]*0.1 + x_data[2]*0.1 + x_data[3]*0.2
+    y = y_data[0]*0.5 + y_data[1]*0.1 + y_data[2]*0.1 + y_data[3]*0.2
+    
+    pygame.draw.circle(window, (255, 255, 255), (x, y), 10)
+
     pygame.draw.circle(window, (100, 0, 0), (x_data[0], y_data[0]), 10)
     pygame.draw.circle(window, (0, 100, 0), (x_data[1], y_data[1]), 10)
     pygame.draw.circle(window, (100, 100, 100), (x_data[2], y_data[2]), 10)
