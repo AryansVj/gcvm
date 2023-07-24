@@ -39,23 +39,37 @@ accAng = []
 gyroAcc = []
 gyroAng = []
 
+lpf_n = 4
+
+def lpf(avg_lst:list, element, iter, n):
+    """Using moving average"""
+
+    lpf_res = 0
+    for i in range(n):
+        lpf_res += avg_lst[iter - i][element]
+
+    return lpf_res/n
+
+def hpf(old_val, hpf_lst:list, element, iter):
+    hpf_res = old_val
+    hpf_res += hpf_lst[iter][element] - hpf_lst[iter-1][element]
+
+    return hpf_res
+
 while running and end == False:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
     # Clear the screen
-    window.fill((0, 0, 0))
-
+    window.fill((0, 0, 0))    
 
     try:
         # data = ser.readline().decode().rstrip()  # Read a line of serial data
         data = fh.readline().rstrip()   # Read a line from text data file
         vals = data.split(" : ")[1:]
-        count+=1
         if len(data) < 1:
             end = True
-
     except:
         continue
 
@@ -91,25 +105,27 @@ while running and end == False:
     gyroAng.append((x_data[3], y_data[3]))
 
     # Draw the animated object
-    if count < 5:
+    if count < lpf_n:
         x_data[2] = centerX
         y_data[2] = centerY
         pass
     else:
-        x_data[0] = 0.25*(acc[count-1][0] + acc[count-2][0] + acc[count-3][0] + acc[count-4][0])
-        y_data[0] = 0.25*(acc[count-1][1] + acc[count-2][1] + acc[count-3][1] + acc[count-4][1])
+        #Low pass values
+        x_data[0] = lpf(acc, 0, count, lpf_n)
+        y_data[0] = lpf(acc, 1, count, lpf_n)
         
-        x_data[1] = 0.25*(accAng[count-1][0] + accAng[count-2][0] + accAng[count-3][0] + accAng[count-4][0])
-        y_data[1] = 0.25*(accAng[count-1][1] + accAng[count-2][1] + accAng[count-3][1] + accAng[count-4][1])
+        x_data[1] = lpf(accAng, 0, count, lpf_n)
+        y_data[1] = lpf(accAng, 1, count, lpf_n)
 
-        x_data[3] = 0.25*(gyroAng[count-1][0] + gyroAng[count-2][0] + gyroAng[count-3][0] + gyroAng[count-4][0])
-        y_data[3] = 0.25*(gyroAng[count-1][1] + gyroAng[count-2][1] + gyroAng[count-3][1] + gyroAng[count-4][1])
+        x_data[3] = lpf(gyroAng, 0, count, lpf_n)
+        y_data[3] = lpf(gyroAng, 1, count, lpf_n)
 
-        x_data[2] = x_data[2] + (gyroAcc[count-1][0] - gyroAcc[count-2][0])
-        y_data[2] = y_data[2] + (gyroAcc[count-1][1] - gyroAcc[count-2][1])
+        #High pass values
+        x_data[2] = hpf(x_data[2], gyroAcc, 0, count)
+        y_data[2] = hpf(y_data[2], gyroAcc, 1, count)
 
-        x = x_data[0]*0.5 + x_data[1]*0.1 + x_data[2]*0.1 + x_data[3]*0.2
-        y = y_data[0]*0.5 + y_data[1]*0.1 + y_data[2]*0.1 + y_data[3]*0.2
+    x = x_data[0]*0.55 + x_data[1]*0.1 + x_data[2]*0.05 + x_data[3]*0.2
+    y = y_data[0]*0.55 + y_data[1]*0.1 + y_data[2]*0.05 + y_data[3]*0.2
         
     pygame.draw.circle(window, (255, 255, 255), (x, y), 10)
 
@@ -127,6 +143,8 @@ while running and end == False:
     # Quiting Mechanism (Tap all three touches)
     # if int(vals[-3]) == 1 and float(vals[-2]) == 1 and float(vals[-1]) == 1:
     #     running = False
+
+    count+=1
 
 # Quit pygame
 pygame.quit()
