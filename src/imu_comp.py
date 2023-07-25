@@ -1,10 +1,15 @@
 import math
 import matplotlib.pyplot as plt
 import pygame
+import serial
 
-def get_data(fh):
+def get_data(mode, handle):
     """Get data from a recorded txt fle"""
-    data = fh.readline().rstrip()
+    if mode == "txt":
+        data = handle.readline().rstrip()
+    elif mode == "serial":
+        data = handle.readline().decode().strip()
+
     vals = data.split(" : ")[1:]
     if len(data) > 0:
         #Accelerometer x,y,z readings 
@@ -15,7 +20,7 @@ def get_data(fh):
         return (accel, gyro)
     else:
         return 1
-    
+
 def accel_angle(ax, ay, az):
     """
     Get roll and pitch angles in degrees from accelerometer readings using trignometry
@@ -98,8 +103,14 @@ def plot_data(angle, time, data, iter, alpha):
     plt.show()
 
 def main():
+    #Data from txt file
     file_name = "../demo_test/trial2_data.txt"
     fh = open(file_name)
+
+    #Data from serial input
+    # port = "COM16"
+    # baud_rate = 9600
+    # ser = serial.Serial(port, baud_rate)
 
     #Pygame Animation
     window_size = (1000, 600)
@@ -150,9 +161,9 @@ def main():
 
         #To break loop when data file ended
         try:
-            (accel, gyro) = get_data(fh)
+            (accel, gyro) = get_data("txt", fh)
         except TypeError:
-            if get_data(fh) == 1:
+            if get_data("txt", fh) == 1:
                 break
         (aroll, apitch) = accel_angle(accel[0], accel[1], accel[2])
         (groll, gpitch) = gyro_angle(roll, pitch, gyro[0], gyro[1], dt)
