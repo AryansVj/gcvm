@@ -45,12 +45,49 @@ def complimetary_filter(aroll, apitch, groll, gpitch, alpha):
 
     return (roll, pitch)
 
-def plot_data(angle, time, data, alpha):
-    """To Plot the data for deemonstration and observations"""
+lpf_list = []
 
-    plt.plot(time, data["accel"], 'r-.', label="Accelerometer angle")
-    plt.plot(time, data["gyro"], 'g-.', label="Gyroscope angle")
-    plt.plot(time, data["compl"], 'k', label="Complementary filtered angle")
+def lpf_result(n):
+    global lpf_list
+
+    lpf_roll = 0
+    lpf_pitch = 0
+
+    for i in range(n):
+        lpf_roll += lpf_list[i][0]
+        lpf_pitch += lpf_list[i][1]
+    
+    return (lpf_roll/n, lpf_pitch/n)
+
+
+def plot_data(angle, time, data, iter, alpha):
+    """To Plot the data for deemonstration and observations"""
+    
+    data_set_roll = [[], [], [], []]
+    data_set_pitch = [[], [], [], []]
+
+    for i in range(iter):
+        data_set_roll[0].append(data["accel"][i][0])
+        data_set_pitch[0].append(data["accel"][i][1])
+
+        data_set_roll[1].append(data["gyro"][i][0])
+        data_set_pitch[1].append(data["gyro"][i][1])
+
+        data_set_roll[2].append(data["compl"][i][0])
+        data_set_pitch[2].append(data["compl"][i][1])
+
+        data_set_roll[3].append(data["lpf_compl"][i][0])
+        data_set_pitch[3].append(data["lpf_compl"][i][1])
+    
+    if angle == "Roll":
+        data = data_set_roll
+    else:
+        data = data_set_pitch
+
+    plt.plot(time, data[0], 'r-.', label="Accelerometer angle")
+    plt.plot(time, data[1], 'g-.', label="Gyroscope angle")
+    plt.plot(time, data[2], 'b-.', label="Complementary filtered angle")
+    plt.plot(time, data[3], 'k', label="LPF Complementary filtered angle")
 
     plt.title(f"{angle} angle estimation with complimentary filter (alpha = {alpha})")
     plt.xlabel("time /s")
@@ -85,13 +122,18 @@ def main():
     roll = init_roll
     pitch = init_pitch
     dt = 0.1
-    alpha = 0.05
+    alpha = 0.05    # Complimentary filter parameter
+    n = 10   # LPF moving avg window size
 
     data = {
         "accel": [],
         "gyro": [],
-        "compl": []
+        "compl": [],
+        "lpf_compl": []
     }
+
+    posX_ = centerX
+    posY_ = centerY
 
     posX = centerX
     posY = centerY
@@ -116,10 +158,16 @@ def main():
         (groll, gpitch) = gyro_angle(roll, pitch, gyro[0], gyro[1], dt)
 
         (roll, pitch) = complimetary_filter(aroll, apitch, groll, gpitch, alpha)
+        lpf_list.append((roll, pitch))
+
+        if not iter < n:
+            lpf_list.pop(0)
+            (roll, pitch) = lpf_result(n)
 
         data["accel"].append((apitch, aroll))
         data["gyro"].append((gpitch, groll))
         data["compl"].append((pitch, roll))
+        data["lpf_compl"].append((pitch, roll))
 
         print(f"Roll: {roll}, Pitch: {pitch}    Count: {iter}")
 
@@ -127,16 +175,23 @@ def main():
 
         #Pygame animation
 
-        #Position via integration (Dead reckoning)
-        # posX += data["compl"][-1][0]*0.1
-        # posY += data["compl"][-1][1]*0.1
+        # Position via integration (Dead reckoning)
+        posX_ += data["compl"][-1][0]*0.05
+        posY_ += data["compl"][-1][1]*0.05
 
-        #Position via derect angle
-        posX = centerX + data["compl"][-1][0]
-        posY = centerY + data["compl"][-1][1]
+        posX += data["lpf_compl"][-1][0]*0.05
+        posY += data["lpf_compl"][-1][1]*0.05
+
+        # Position via derect angle
+        # posX_ = centerX + data["compl"][-1][0]
+        # posY_ = centerY + data["compl"][-1][1]
+
+        # posX = centerX + data["lpf_compl"][-1][0]
+        # posY = centerY + data["lpf_compl"][-1][1]
 
         window.fill((0,0,0))
-        pygame.draw.circle(window, (50,50,50), (centerX, centerY), 10)
+        pygame.draw.circle(window, (50,50,50), (centerX, centerY), 5)  # Center Reference dot
+        pygame.draw.circle(window, (150,200,0), (posX_, posY_), 15) 
         pygame.draw.circle(window, (255,255,255), (posX, posY), 10)
 
         pygame.display.flip()
@@ -146,7 +201,7 @@ def main():
 
     fh.close()
 
-    # plot_data("Pitch", time, data, alpha)
+    plot_data("Pitch", time, data, iter, alpha)
     pygame.quit()
 
 main()
