@@ -1,5 +1,6 @@
 import math
 import matplotlib.pyplot as plt
+import pygame
 
 def get_data(fh):
     """Get data from a recorded txt fle"""
@@ -60,8 +61,21 @@ def plot_data(angle, time, data, alpha):
     plt.show()
 
 def main():
-    file_name = "../demo_test/trial1_data.txt"
+    file_name = "../demo_test/trial2_data.txt"
     fh = open(file_name)
+
+    #Pygame Animation
+    window_size = (1000, 600)
+    centerX = window_size[0]//2
+    centerY = window_size[1]//2
+    
+    pygame.init()
+    window = pygame.display.set_mode(window_size)
+    pygame.display.set_caption("IMU output demonstration")
+
+    clock = pygame.time.Clock()
+
+    running = True
 
     iter = 0
     time = []
@@ -71,14 +85,28 @@ def main():
     roll = init_roll
     pitch = init_pitch
     dt = 0.1
-    alpha = 0.1
+    alpha = 0.05
 
     data = {
         "accel": [],
         "gyro": [],
         "compl": []
     }
+
+    posX = centerX
+    posY = centerY
+
     while True:
+
+        #Pygame benchmarks
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        if running == False:
+            break
+
+        #To break loop when data file ended
         try:
             (accel, gyro) = get_data(fh)
         except TypeError:
@@ -89,15 +117,36 @@ def main():
 
         (roll, pitch) = complimetary_filter(aroll, apitch, groll, gpitch, alpha)
 
-        data["accel"].append(apitch)
-        data["gyro"].append(gpitch)
-        data["compl"].append(pitch)
+        data["accel"].append((apitch, aroll))
+        data["gyro"].append((gpitch, groll))
+        data["compl"].append((pitch, roll))
 
         print(f"Roll: {roll}, Pitch: {pitch}    Count: {iter}")
 
         time.append(iter*dt)
+
+        #Pygame animation
+
+        #Position via integration (Dead reckoning)
+        # posX += data["compl"][-1][0]*0.1
+        # posY += data["compl"][-1][1]*0.1
+
+        #Position via derect angle
+        posX = centerX + data["compl"][-1][0]
+        posY = centerY + data["compl"][-1][1]
+
+        window.fill((0,0,0))
+        pygame.draw.circle(window, (50,50,50), (centerX, centerY), 10)
+        pygame.draw.circle(window, (255,255,255), (posX, posY), 10)
+
+        pygame.display.flip()
+        clock.tick(60)
+
         iter +=1
-    
+
+    fh.close()
+
     # plot_data("Pitch", time, data, alpha)
+    pygame.quit()
 
 main()
