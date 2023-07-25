@@ -44,6 +44,21 @@ def complimetary_filter(aroll, apitch, groll, gpitch, alpha):
 
     return (roll, pitch)
 
+def plot_data(angle, time, data, alpha):
+    """To Plot the data for deemonstration and observations"""
+
+    plt.plot(time, data["accel"], 'r-.', label="Accelerometer angle")
+    plt.plot(time, data["gyro"], 'g-.', label="Gyroscope angle")
+    plt.plot(time, data["compl"], 'k', label="Complementary filtered angle")
+
+    plt.title(f"{angle} angle estimation with complimentary filter (alpha = {alpha})")
+    plt.xlabel("time /s")
+    plt.ylabel(f"{angle} Angle /deg")
+    plt.legend()
+    plt.grid(1)
+
+    plt.show()
+
 def main():
     file_name = "../demo_test/trial1_data.txt"
     fh = open(file_name)
@@ -74,19 +89,15 @@ def main():
 
         (roll, pitch) = complimetary_filter(aroll, apitch, groll, gpitch, alpha)
 
-        data["accel"].append(aroll)
-        data["gyro"].append(groll)
-        data["compl"].append(roll)
+        data["accel"].append(apitch)
+        data["gyro"].append(gpitch)
+        data["compl"].append(pitch)
 
         print(f"Roll: {roll}, Pitch: {pitch}    Count: {iter}")
 
-        time.append(iter)
+        time.append(iter*dt)
         iter +=1
     
-    plt.plot(time, data["accel"], 'r')
-    plt.plot(time, data["gyro"], 'g')
-    plt.plot(time, data["compl"], 'k')
-
-    plt.show()
+    # plot_data("Pitch", time, data, alpha)
 
 main()
