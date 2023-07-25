@@ -74,9 +74,9 @@ def main():
 
         (roll, pitch) = complimetary_filter(aroll, apitch, groll, gpitch, alpha)
 
-        data["accel"].append((aroll, apitch))
-        data["gyro"].append((groll, gpitch))
-        data["compl"].append((roll, pitch))
+        data["accel"].append(aroll)
+        data["gyro"].append(groll)
+        data["compl"].append(roll)
 
         print(f"Roll: {roll}, Pitch: {pitch}    Count: {iter}")
 
