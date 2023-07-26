@@ -8,6 +8,8 @@ def get_data(mode, handle):
     if mode == "txt":
         data = handle.readline().rstrip()
     elif mode == "serial":
+        if not handle.readline().decode().strip().startswith(":"):
+            return 2
         data = handle.readline().decode().strip()
 
     vals = data.split(" : ")[1:]
@@ -103,14 +105,16 @@ def plot_data(angle, time, data, iter, alpha):
     plt.show()
 
 def main():
-    #Data from txt file
-    file_name = "../demo_test/trial2_data.txt"
-    fh = open(file_name)
-
-    #Data from serial input
-    # port = "COM16"
-    # baud_rate = 9600
-    # ser = serial.Serial(port, baud_rate)
+    mode = "serial"
+    if mode == "txt":
+        #Data from txt file
+        file_name = "../demo_test/trial2_data.txt"
+        handle = open(file_name)
+    elif mode == "serial":
+        #Data from serial input
+        port = "COM16"
+        baud_rate = 9600
+        handle = serial.Serial(port, baud_rate)
 
     #Pygame Animation
     window_size = (1000, 600)
@@ -148,6 +152,12 @@ def main():
 
     posX = centerX
     posY = centerY
+    
+    aposX = centerX
+    aposY = centerY
+
+    gposX = centerX
+    gposY = centerY
 
     while True:
 
@@ -161,9 +171,12 @@ def main():
 
         #To break loop when data file ended
         try:
-            (accel, gyro) = get_data("txt", fh)
+            (accel, gyro) = get_data(mode, handle)
         except TypeError:
-            if get_data("txt", fh) == 1:
+            if get_data(mode, handle) == 2:
+                print("Calibrating")
+                continue
+            elif get_data(mode, handle) == 1:
                 break
         (aroll, apitch) = accel_angle(accel[0], accel[1], accel[2])
         (groll, gpitch) = gyro_angle(roll, pitch, gyro[0], gyro[1], dt)
@@ -171,48 +184,56 @@ def main():
         (roll, pitch) = complimetary_filter(aroll, apitch, groll, gpitch, alpha)
         lpf_list.append((roll, pitch))
 
-        if not iter < n:
-            lpf_list.pop(0)
-            (roll, pitch) = lpf_result(n)
+        # if not iter < n:
+        #     lpf_list.pop(0)
+        #     (roll, pitch) = lpf_result(n)
 
-        data["accel"].append((apitch, aroll))
-        data["gyro"].append((gpitch, groll))
-        data["compl"].append((pitch, roll))
-        data["lpf_compl"].append((pitch, roll))
+        data["accel"].append((aroll, apitch))
+        data["gyro"].append((groll, gpitch))
+        data["compl"].append((roll, pitch))
+        # data["lpf_compl"].append((roll, pitch))
 
-        print(f"Roll: {roll}, Pitch: {pitch}    Count: {iter}")
+        print(f"Roll: {roll}, Pitch: {pitch*10}    Count: {iter}")
 
         time.append(iter*dt)
 
         #Pygame animation
 
         # Position via integration (Dead reckoning)
-        posX_ += data["compl"][-1][0]*0.05
-        posY_ += data["compl"][-1][1]*0.05
+        posX_ = centerX + data["compl"][-1][0]
+        posY_ = centerY - data["compl"][-1][1]*10
 
-        posX += data["lpf_compl"][-1][0]*0.05
-        posY += data["lpf_compl"][-1][1]*0.05
+        # posX += data["lpf_compl"][-1][0]*0.05
+        # posY -= data["lpf_compl"][-1][1]*0.05
+
+        aposX = centerX + data["accel"][-1][0]
+        aposY = centerY - data["accel"][-1][1]
+
+        gposX = centerX + data["gyro"][-1][0]
+        gposY = centerY - data["gyro"][-1][1]
 
         # Position via derect angle
         # posX_ = centerX + data["compl"][-1][0]
-        # posY_ = centerY + data["compl"][-1][1]
+        # posY_ = centerY - data["compl"][-1][1]*10
 
         # posX = centerX + data["lpf_compl"][-1][0]
         # posY = centerY + data["lpf_compl"][-1][1]
 
         window.fill((0,0,0))
         pygame.draw.circle(window, (50,50,50), (centerX, centerY), 5)  # Center Reference dot
-        pygame.draw.circle(window, (150,200,0), (posX_, posY_), 15) 
-        pygame.draw.circle(window, (255,255,255), (posX, posY), 10)
+        pygame.draw.circle(window, (255, 255, 255), (posX_, posY_), 15) 
+        # pygame.draw.circle(window, (200,0,0), (aposX, aposY), 10) 
+        # pygame.draw.circle(window, (0,200,0), (gposX, gposY), 10) 
+        # pygame.draw.circle(window, (255,255,255), (posX, posY), 10)
 
         pygame.display.flip()
         clock.tick(60)
 
         iter +=1
 
-    fh.close()
+    handle.close()
 
-    plot_data("Pitch", time, data, iter, alpha)
+    #plot_data("Pitch", time, data, iter, alpha)
     pygame.quit()
 
 main()
