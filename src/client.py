@@ -3,6 +3,8 @@ from bleak import BleakScanner, BleakClient
 from pynput.mouse import Button,Controller
 mouse = Controller()
 import pyautogui as pg
+import pygame
+import struct
 
 # UUID of the service and characteristic to interact with
 SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -15,6 +17,21 @@ x = 100
 y = 100
 scroll =0
 scrolllength =0
+
+fh = open("demo_test/recdata.txt", "w")
+
+#Pygame Animation
+window_size = (1000, 600)
+centerX = window_size[0]//2
+centerY = window_size[1]//2
+
+pygame.init()
+window = pygame.display.set_mode(window_size)
+pygame.display.set_caption("IMU output demonstration")
+
+clock = pygame.time.Clock()
+
+running = True
 
 # Discovering and finding the device
 async def scan_for_device():
@@ -36,12 +53,19 @@ async def scan_for_device():
 
 # Callback function to handle data received by notifications
 def notification_callback(sender: int, data: bytearray):
-    feed = data.hex()
-    print(f"Notification received {feed}")
-    print(data)
-    Xval = int(int(feed[6:8], 16))*8
-    Yval = int(int(feed[4:6], 16))*8
-    click = int(feed[3:4])
+    # feed = data.decode()
+    feed = struct.unpack('<i', data)[0]
+    # feed_int = int(feed, 16)
+    feed_bin = bin(feed)[2:]
+
+    # print(f"Notification received {feed}")
+    # print(data)
+
+    fh.write(f"{data}   {feed}    {feed_bin}\n")
+    
+    click = int(feed_bin[-4:], 2)
+    Xval = int(feed_bin[-18:-4], 2)
+    Yval = int(feed_bin[:-18], 2)
     
     if click == 1:
         print("Left")
@@ -52,21 +76,35 @@ def notification_callback(sender: int, data: bytearray):
     else:
         print("Invalid")
     
+    print(f"Received {feed}")
     print(f"X value {Xval} | Y value {Yval}")
 
-    pg.moveTo(Xval,Yval)
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
 
-    if(click < 4):
-        # click the mouse
-        time = 1         # time the button clicks
-        if(click == 2):
-            mouse.click(Button.right, time)
-        elif(click == 1):
-            mouse.click(Button.left, time)
+        if running == False:
+            break
+    
+    window.fill((0,0,0))
+    pygame.draw.circle(window, (255,255,255), (Xval, Yval/3), 10)
+    
+    pygame.display.flip()
+    clock.tick(60)
 
-    elif(click == 4):
-        scrolllength = x
-        pg.scroll(-1*(Yval-500))
+    # pg.moveTo(Xval,Yval)
+
+    # if(click < 4):
+    #     # click the mouse
+    #     time = 1         # time the button clicks
+    #     if(click == 2):
+    #         mouse.click(Button.right, time)
+    #     elif(click == 1):
+    #         mouse.click(Button.left, time)
+
+    # elif(click == 4):
+    #     scrolllength = x
+    #     pg.scroll(-1*(Yval-500))
     
 
 '''
@@ -107,7 +145,7 @@ async def interact_with_device(device):
 
                 # Receive characteristic value as the device notifies for 10 seconds
                 time_count = 0
-                while time_count < 80:
+                while time_count < 60:
                     await asyncio.sleep(1)
                     time_count += 1
 
@@ -124,5 +162,8 @@ async def main():
         print("ESP32 device not found.")
 
 asyncio.run(main())
+
+fh.close()
+pygame.quit()
 
 # is this edit was in my branch

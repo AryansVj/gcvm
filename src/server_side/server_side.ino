@@ -17,14 +17,6 @@
 MPU6050 mpu6050(Wire);
 
 // Assigning the input & output ports and variable values 
-const int Touchpower_1 = 4;
-const int Touchpower_2 = 2;
-const int Touchpower_3 = 15;
-
-const int TouchpowerL_1 = 25;
-const int TouchpowerL_2 = 26;
-const int TouchpowerL_3 = 27;
-
 const int inputPin_1 = 12;
 const int inputPin_2 = 13;
 const int inputPin_3 = 14;
@@ -32,22 +24,27 @@ const int inputPin_3 = 14;
 int LeftClick  = 0;
 int RightClick  = 0;
 int ScrollClick  = 0;
-int MouseVector[3] = {100,100,100};
+int MouseVector[2] = {100,100};
 
 int Xangle = 0;
 int Yangle = 0;
-int Zangle = 0;
 
 int MappedX = 0; 
 int MappedY = 0;
-int MappedZ = 0;
+
+float centerX = 1000/2;
+float centerY = 600/2;
+
+int16_t byte1 = 0;
+int16_t byte2 = 0;
+int8_t byte3 = 0;
 
 // Bluetooth 
 BLEServer* pServer = NULL;
 BLECharacteristic* pCharacteristic = NULL;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
-uint32_t value = 0;
+int32_t value = 0;
 uint8_t* val_cast = 0;
 
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -65,20 +62,10 @@ class MyServerCallbacks: public BLEServerCallbacks {
 
 
 void setup() {
-
-  pinMode(Touchpower_1, OUTPUT);
-  pinMode(Touchpower_2, OUTPUT);
-  pinMode(Touchpower_3, OUTPUT);
-
-  pinMode(TouchpowerL_1, OUTPUT);
-  pinMode(TouchpowerL_2, OUTPUT);
-  pinMode(TouchpowerL_3, OUTPUT);
-
   
   pinMode(inputPin_1, INPUT);
   pinMode(inputPin_2, INPUT);
   pinMode(inputPin_3, INPUT);
-
  
   Serial.begin(115200);
 
@@ -87,8 +74,6 @@ void setup() {
   mpu6050.calcGyroOffsets(true);
   // Set accelerometer range to +/- 2g
   //mpu6050.setFullScaleAccelRange(MPU6050_ACCEL_FS_2);
-
-
 
   // Create the BLE Device
   BLEDevice::init("GCVM_Server");
@@ -123,56 +108,15 @@ void setup() {
 
 void loop() {
   
-  digitalWrite(Touchpower_1, HIGH);
-  digitalWrite(Touchpower_2, HIGH);
-  digitalWrite(Touchpower_3, HIGH);
-
-  digitalWrite(TouchpowerL_1, LOW);
-  digitalWrite(TouchpowerL_2, LOW);
-  digitalWrite(TouchpowerL_3, LOW);
-  
   mpu6050.update();
   int Xangle = mpu6050.getAngleX();
   int Yangle = mpu6050.getAngleY();
-  int Zangle = mpu6050.getAngleZ();
 
-
-  if(MouseVector[0]<2000 &&  MouseVector[0]>= 100  ){
-    MouseVector[0]= MouseVector[0]+ Xangle;
-  } else if( Xangle >0 && MouseVector[0]<=100){
-    MouseVector[0]= MouseVector[0]+ Xangle; 
-  } else if (Xangle <0 && MouseVector[0]>=2000){
-    MouseVector[0]= MouseVector[0]+ Xangle;
-  } else {
-    MouseVector[0]= MouseVector[0];
-  }
-  
-  
-  if(MouseVector[1]<1150 &&  MouseVector[1]>=100  ){
-    MouseVector[1]= MouseVector[1]+ Yangle;
-  } else if( Yangle > 0 && MouseVector[1]<=100){
-    MouseVector[1]= MouseVector[1]+ Yangle; 
-  } else if (Yangle <0 && MouseVector[1]>=1150){
-    MouseVector[1]= MouseVector[1]+ Yangle;
-  } else {
-    MouseVector[1]= MouseVector[1];
-  }
-  
-
-  if(MouseVector[2]<640 &&  MouseVector[2]>=100  ){
-    MouseVector[2]= MouseVector[2]+ Zangle;
-  } else if( Zangle >0 && MouseVector[2]<=100){
-    MouseVector[2]= MouseVector[2]+ Zangle; 
-  } else if (Zangle <0 && MouseVector[2]>=640){
-    MouseVector[2]= MouseVector[2]+ Zangle;
-  } else {
-    MouseVector[2]= MouseVector[2];
-  }
-
+  MouseVector[0] = centerX + Xangle;
+  MouseVector[1] = centerY + Yangle;
   
   //////////////////////////////////////////////
 
-  
   int inputValueLC = digitalRead(inputPin_1);
   
   if (inputValueLC == HIGH) {
@@ -200,86 +144,31 @@ void loop() {
   } else {
     ScrollClick = 0;
   }
-///////////////////////////////////////////////////////////////
-  // mapping the co ordinate values to usable X,Y cordinates 
-  
-  if(MouseVector[0]<100){
-    MappedX = 0;
-  } else if(MouseVector[0]> 2000){
-    MappedX = 1915 ;
-  } else{
-    MappedX = MouseVector[0]-100 ;
-  }
-  
-   if(MouseVector[1]<100){
-    MappedY = 0;
-  } else if(MouseVector[1]> 1150){
-    MappedY = 1050;
-  } else{
-    MappedY = MouseVector[1]-100 ;
-  }
 
-  /////////////////////////////////////////////////////////////////
-
-
-  Serial.print(" MappedX: ");
-  Serial.print(MappedX);
-  Serial.print(" MappedY : ");
-  Serial.println(MappedY);
-
-
-  //////////////////////////////////////////
-
-  // Serial.print("Xvalue  : ");
-  // Serial.print(MouseVector[0]);
-  // Serial.print("\tYvalue : ");
-  // Serial.print(MouseVector[1]);
-  // Serial.print("\tZvalue  : ");
-  // Serial.println(MouseVector[2]);
-
-  //////////////////////////////////////////
-  
-  Serial.print("Left Click  : ");
-  Serial.print(LeftClick);
-  Serial.print("\tRight Click : ");
-  Serial.print(RightClick);
-  Serial.print("\tScroll Click : ");
-  Serial.println(ScrollClick);
-
-
-//  ///////////////////////////////////////////
 //
   Serial.print("angleX : ");
-  Serial.print(mpu6050.getAngleX());
+  Serial.print(Xangle);
   Serial.print("\tangleY : ");
-  Serial.print(mpu6050.getAngleY());
-  Serial.print("\tangleZ : ");
-  Serial.println(mpu6050.getAngleZ());
-
-  uint8_t byte1 = MappedX/8;
-  uint8_t byte2 = MappedY/8;
-  uint8_t byte3 = 0b00000000;
+  Serial.print(Yangle);
+  
+  byte1 = MouseVector[0];
+  byte2 = MouseVector[1];
+  byte3 = 0b00000000;
 
   byte3 |= ScrollClick;
   byte3 <<= 1;
   byte3 |= RightClick;
   byte3 <<= 1;
   byte3 |= LeftClick;
-  
-  Serial.print("X cord: ");
-  Serial.print(byte1);
-  Serial.print(" | Y cord: ");
-  Serial.print(byte2);
-  Serial.print(" | Clicks: ");
-  Serial.print(byte3);
-  Serial.println("");
-  
+ 
   // Shift the bytes and create the 32-bit value
   value = 0;
-  value |= (uint32_t)byte1 << 24;
-  value |= (uint32_t)byte2 << 16;
-  value |= (uint32_t)byte3 << 8;
+  value |= (int32_t)byte1 << 18;
+  value |= (int32_t)byte2 << 4;
+  value |= (int32_t)byte3;
 
+  Serial.println(value);
+  
   // value = MouseVector[0];
    // notify changed value
    if (deviceConnected) {
@@ -323,5 +212,5 @@ void loop() {
         oldDeviceConnected = deviceConnected;
     }
     
-    delay(400);
+    delay(100);
 }
