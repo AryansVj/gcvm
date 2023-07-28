@@ -17,27 +17,20 @@
 MPU6050 mpu6050(Wire);
 
 // Assigning the input & output ports and variable values 
-const int inputPin_1 = 12;
-const int inputPin_2 = 13;
-const int inputPin_3 = 14;
+const int inputPin_1 = 12;  // Left Click
+const int inputPin_2 = 14;  // Right Click
+const int inputPin_3 = 13;  // Scroll Enable
 
 int LeftClick  = 0;
 int RightClick  = 0;
 int ScrollClick  = 0;
-int MouseVector[2] = {100,100};
 
-int Xangle = 0;
-int Yangle = 0;
+float pitch = 0.0;
+float roll = 0.0;
 
-int MappedX = 0; 
-int MappedY = 0;
-
-float centerX = 1000/2;
-float centerY = 600/2;
-
-int16_t byte1 = 0;
-int16_t byte2 = 0;
-int8_t byte3 = 0;
+int16_t pitch_byte = 0;
+int16_t roll_byte = 0;
+int8_t click_byte = 0b00000000;
 
 // Bluetooth 
 BLEServer* pServer = NULL;
@@ -109,67 +102,59 @@ void setup() {
 void loop() {
   
   mpu6050.update();
-  int Xangle = mpu6050.getAngleX();
-  int Yangle = mpu6050.getAngleY();
+  pitch = mpu6050.getAngleX();
+  roll = mpu6050.getAngleY();
 
-  MouseVector[0] = centerX + Xangle;
-  MouseVector[1] = centerY + Yangle;
-  
-  //////////////////////////////////////////////
-
+  // Left-Click detect
   int inputValueLC = digitalRead(inputPin_1);
-  
   if (inputValueLC == HIGH) {
     LeftClick = 1;
   } else {
     LeftClick = 0;
   }
-  /////////////////////////////////////////////
 
-  
+  // Right-Click detect
   int inputValueRC = digitalRead(inputPin_2);
-  
   if (inputValueRC == HIGH) {
     RightClick = 1;
   } else {
     RightClick = 0;
   }
 
-  ////////////////////////////////////////////
-  
-  int inputValueSC = digitalRead(inputPin_3);
-  
+  // Scroll-Enable detect
+  int inputValueSC = digitalRead(inputPin_3);  
   if (inputValueSC == HIGH) {
     ScrollClick = 1;
   } else {
     ScrollClick = 0;
   }
 
-//
-  Serial.print("angleX : ");
-  Serial.print(Xangle);
-  Serial.print("\tangleY : ");
-  Serial.print(Yangle);
+  pitch_byte = pitch+500;
+  roll_byte = roll+500;
   
-  byte1 = MouseVector[0];
-  byte2 = MouseVector[1];
-  byte3 = 0b00000000;
-
-  byte3 |= ScrollClick;
-  byte3 <<= 1;
-  byte3 |= RightClick;
-  byte3 <<= 1;
-  byte3 |= LeftClick;
+  click_byte |= ScrollClick;
+  click_byte <<= 1;
+  click_byte |= RightClick;
+  click_byte <<= 1;
+  click_byte |= LeftClick;
  
   // Shift the bytes and create the 32-bit value
   value = 0;
-  value |= (int32_t)byte1 << 18;
-  value |= (int32_t)byte2 << 4;
-  value |= (int32_t)byte3;
+  value |= (int32_t)roll_byte << 18;
+  value |= (int32_t)pitch_byte << 4;
+  value |= (int32_t)click_byte;
 
+  
+  
+  Serial.print("Pitch Angle: ");
+  Serial.print(pitch);
+  Serial.print("\tRoll Angle: ");
+  Serial.print(roll);  
+  Serial.print("\tClick : ");
+  Serial.println(click_byte);
+  
   Serial.println(value);
   
-  // value = MouseVector[0];
    // notify changed value
    if (deviceConnected) {
         val_cast = (uint8_t*)&value;
@@ -180,25 +165,9 @@ void loop() {
 
         // Get the characteristic value as a byte array
         std::string characteristicValue = pCharacteristic->getValue();
-        
-        // Print the characteristic value as a byte array
-        Serial.print("Value: ");
-        Serial.print(value);
-        
-        Serial.println("");
-        Serial.print("Characteristic value: ");
-        for (size_t i = 0; i < characteristicValue.length(); i++) {
-          Serial.print(characteristicValue[i], HEX);
-          Serial.print(" ");
-        };
-        Serial.println("");
-        ////value++;
-        
-        delay(3); // 
-
-
-        
+        delay(3); //     
     }
+    
     // disconnecting
     if (!deviceConnected && oldDeviceConnected) {
         delay(500); // give the bluetooth stack the chance to get things ready

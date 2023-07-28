@@ -74,18 +74,7 @@ def notification_callback(sender: int, data: bytearray,):
 
     y_bits = bin(y_byte)
     x_bits = bin(x_byte)
-    # if y_bits[:3] == "0b1":
-    #     y_byte2 = ""
-    #     for i in range(len(y_bits)-2):
-    #         y_byte2 += int(y_bits[2:][i]) ^ 1
 
-    #     y_byte = (int(y_bits, 2) ^ 16383) + 1
-    #     print(y_bits, "lenght", len(y_bits))
-    #     print("Compliment", y_byte)
-
-    # if x_bits[:3] == "0b1":
-    #     x_byte = (int(x_bits, 2) ^ 16383) + 1
-    #     print("Compliment", x_byte)
     # Logging  
     fh.write(f"{data}   {feed}    {feed_bin}    {x_byte}    {y_byte}        {click_byte} \n")
     
@@ -97,10 +86,6 @@ def notification_callback(sender: int, data: bytearray,):
     Yval += y_byte*0.1 -10
     
     print(f"{data}   {feed}    {x_byte}  - {Xval}     {y_byte}  -  {Yval}    {click_byte}")
-    # if Xval > centerX + correction_offset:
-    #     Xval = Xval - correction_offset
-    # if Yval < correction_offset:
-    #     Yval = Yval - correction_offset
 
     mouse = Controller()
     mouse.position = ((Xval, Yval))
@@ -118,21 +103,17 @@ def notification_callback(sender: int, data: bytearray,):
     # pygame.display.flip()
     # clock.tick(60)
 
-    # pg.moveTo(Xval,Yval)
+    if(click_byte < 4):
+        # click the mouse
+        time = 1         # time the button clicks
+        if(click_byte == 2):
+            mouse.click(Button.right, time)
+        elif(click_byte == 1):
+            mouse.click(Button.left, time)
 
-    # if(click_byte < 4):
-    #     # click the mouse
-    #     time = 1         # time the button clicks
-    #     if(click_byte == 2):
-    #         mouse.click(Button.right, time)
-    #     elif(click_byte == 1):
-    #         mouse.click(Button.left, time)
-
-    # elif(click_byte == 4):
-    #     scrolllength = x
-    #     pg.scroll(-1*(Yval-500))
-    
-
+    elif(click_byte == 4):
+        scrolllength = x
+        pg.scroll(-1*(Yval*0.5))
 
     time_count = 0
 
@@ -179,10 +160,22 @@ async def interact_with_device(device):
                 print("Client Disconnected")
 
 async def main():
+    count = 0
+    timeout = 5
     print("Discovering...")
     device = await scan_for_device()
     if device:
-        await interact_with_device(device)
+        while True:
+            try:
+                await interact_with_device(device)
+            except:
+                if count < timeout:
+                    count +=1
+                    print(f"Attempt {count} failed. Retrying...")
+                    continue
+                else:
+                    print("TIMEOUT. Connection Failed.")
+                    break
     else:
         print("ESP32 device not found.")
 
