@@ -5,6 +5,7 @@ mouse = Controller()
 import pyautogui as pg
 import pygame
 import struct
+import tkinter as tk
 
 # UUID of the service and characteristic to interact with
 SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -21,7 +22,11 @@ scrolllength =0
 fh = open("demo_test/recdata.txt", "w")
 
 #Pygame Animation
-window_size = (1000, 600)
+
+root = tk.Tk()
+window_size = (root.winfo_screenwidth()/1.5, root.winfo_screenheight()/1.5)
+root.destroy()  # Close the temporary tkinter window
+
 centerX = window_size[0]//2
 centerY = window_size[1]//2
 
@@ -56,29 +61,23 @@ def notification_callback(sender: int, data: bytearray):
     # feed = data.decode()
     feed = struct.unpack('<i', data)[0]
     # feed_int = int(feed, 16)
-    feed_bin = bin(feed)[2:]
+    feed_bin = bin(feed)
 
     # print(f"Notification received {feed}")
     # print(data)
+    click_byte = feed & 15
+    x_byte = (feed >> 4) & 16383 
+    y_byte = (feed >> 18) & 16383   # Masking and bit shifting
 
-    fh.write(f"{data}   {feed}    {feed_bin}\n")
-    
-    click = int(feed_bin[-4:], 2)
-    Xval = int(feed_bin[-18:-4], 2)
-    Yval = int(feed_bin[:-18], 2)
-    
-    if click == 1:
-        print("Left")
-    elif click == 2:
-        print("Right")
-    elif click == 4:
-        print("Scroll")
-    else:
-        print("Invalid")
+    # Logging  
+    fh.write(f"{data}   {feed}    {feed_bin}    {x_byte}    {y_byte}        {click_byte} \n")
     
     print(f"Received {feed}")
-    print(f"X value {Xval} | Y value {Yval}")
+    print(f"{data}   {feed}    {x_byte}    {y_byte}        {click_byte}")
 
+    Xval = centerX + x_byte/100
+    Yval = centerY + y_byte/100
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -87,22 +86,22 @@ def notification_callback(sender: int, data: bytearray):
             break
     
     window.fill((0,0,0))
-    pygame.draw.circle(window, (255,255,255), (Xval, Yval/3), 10)
+    pygame.draw.circle(window, (255,255,255), (Xval, Yval), 10)
     
     pygame.display.flip()
     clock.tick(60)
 
     # pg.moveTo(Xval,Yval)
 
-    # if(click < 4):
+    # if(click_byte < 4):
     #     # click the mouse
     #     time = 1         # time the button clicks
-    #     if(click == 2):
+    #     if(click_byte == 2):
     #         mouse.click(Button.right, time)
-    #     elif(click == 1):
+    #     elif(click_byte == 1):
     #         mouse.click(Button.left, time)
 
-    # elif(click == 4):
+    # elif(click_byte == 4):
     #     scrolllength = x
     #     pg.scroll(-1*(Yval-500))
     
