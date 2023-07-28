@@ -1,7 +1,6 @@
 import asyncio
 from bleak import BleakScanner, BleakClient
 from pynput.mouse import Button,Controller
-mouse = Controller()
 import pyautogui as pg
 import pygame
 import struct
@@ -18,23 +17,25 @@ x = 100
 y = 100
 scroll =0
 scrolllength =0
-
 fh = open("demo_test/recdata.txt", "w")
 
 #Pygame Animation
 
 root = tk.Tk()
-window_size = (root.winfo_screenwidth()/1.5, root.winfo_screenheight()/1.5)
+window_size = (root.winfo_screenwidth(), root.winfo_screenheight())
 root.destroy()  # Close the temporary tkinter window
 
 centerX = window_size[0]//2
 centerY = window_size[1]//2
 
-pygame.init()
-window = pygame.display.set_mode(window_size)
-pygame.display.set_caption("IMU output demonstration")
+Xval = 0
+Yval = 0
 
-clock = pygame.time.Clock()
+# pygame.init()
+# window = pygame.display.set_mode(window_size)
+# pygame.display.set_caption("IMU output demonstration")
+
+# clock = pygame.time.Clock()
 
 running = True
 
@@ -57,7 +58,9 @@ async def scan_for_device():
     return None
 
 # Callback function to handle data received by notifications
-def notification_callback(sender: int, data: bytearray):
+def notification_callback(sender: int, data: bytearray,):
+    global Xval
+    global Yval
     # feed = data.decode()
     feed = struct.unpack('<i', data)[0]
     # feed_int = int(feed, 16)
@@ -66,30 +69,54 @@ def notification_callback(sender: int, data: bytearray):
     # print(f"Notification received {feed}")
     # print(data)
     click_byte = feed & 15
-    x_byte = (feed >> 4) & 16383 
-    y_byte = (feed >> 18) & 16383   # Masking and bit shifting
+    x_byte = ((feed >> 4) & 16383) - 500
+    y_byte = ((feed >> 18) & 16383) - 500  # Masking and bit shifting
 
+    y_bits = bin(y_byte)
+    x_bits = bin(x_byte)
+    # if y_bits[:3] == "0b1":
+    #     y_byte2 = ""
+    #     for i in range(len(y_bits)-2):
+    #         y_byte2 += int(y_bits[2:][i]) ^ 1
+
+    #     y_byte = (int(y_bits, 2) ^ 16383) + 1
+    #     print(y_bits, "lenght", len(y_bits))
+    #     print("Compliment", y_byte)
+
+    # if x_bits[:3] == "0b1":
+    #     x_byte = (int(x_bits, 2) ^ 16383) + 1
+    #     print("Compliment", x_byte)
     # Logging  
     fh.write(f"{data}   {feed}    {feed_bin}    {x_byte}    {y_byte}        {click_byte} \n")
     
     print(f"Received {feed}")
-    print(f"{data}   {feed}    {x_byte}    {y_byte}        {click_byte}")
 
-    Xval = centerX + x_byte/100
-    Yval = centerY + y_byte/100
-    
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+    correction_offset = 655    # Two's compliment correction offset. Decimal equivalant of -1
 
-        if running == False:
-            break
+    Xval += x_byte*0.1
+    Yval += y_byte*0.1 -10
     
-    window.fill((0,0,0))
-    pygame.draw.circle(window, (255,255,255), (Xval, Yval), 10)
+    print(f"{data}   {feed}    {x_byte}  - {Xval}     {y_byte}  -  {Yval}    {click_byte}")
+    # if Xval > centerX + correction_offset:
+    #     Xval = Xval - correction_offset
+    # if Yval < correction_offset:
+    #     Yval = Yval - correction_offset
+
+    mouse = Controller()
+    mouse.position = ((Xval, Yval))
+
+    # for event in pygame.event.get():
+    #     if event.type == pygame.QUIT:
+    #         running = False
+
+    #     if running == False:
+    #         break
     
-    pygame.display.flip()
-    clock.tick(60)
+    # window.fill((0,0,0))
+    # pygame.draw.circle(window, (255,255,255), (Xval, Yval), 10)
+    
+    # pygame.display.flip()
+    # clock.tick(60)
 
     # pg.moveTo(Xval,Yval)
 
@@ -106,17 +133,16 @@ def notification_callback(sender: int, data: bytearray):
     #     pg.scroll(-1*(Yval-500))
     
 
-'''
+
     time_count = 0
 
     while time_count < 10:
         #take the position of the mouse
         pos = mouse.position
-        print(pos)
+        # print(pos)
         
         time_count += 1
-'''                
-
+                
 
 async def interact_with_device(device):
     async with BleakClient(device) as client:
@@ -163,6 +189,6 @@ async def main():
 asyncio.run(main())
 
 fh.close()
-pygame.quit()
+# pygame.quit()
 
 # is this edit was in my branch
