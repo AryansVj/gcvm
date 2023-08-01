@@ -1,8 +1,10 @@
 import asyncio
 from bleak import BleakScanner, BleakClient
 from pynput.mouse import Button,Controller
-mouse = Controller()
 import pyautogui as pg
+import pygame
+import struct
+import tkinter as tk
 
 # UUID of the service and characteristic to interact with
 SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -15,6 +17,27 @@ x = 100
 y = 100
 scroll =0
 scrolllength =0
+fh = open("demo_test/recdata.txt", "w")
+
+#Pygame Animation
+
+root = tk.Tk()
+window_size = (root.winfo_screenwidth(), root.winfo_screenheight())
+root.destroy()  # Close the temporary tkinter window
+
+centerX = window_size[0]//2
+centerY = window_size[1]//2
+
+Xval = 0
+Yval = 0
+
+# pygame.init()
+# window = pygame.display.set_mode(window_size)
+# pygame.display.set_caption("IMU output demonstration")
+
+# clock = pygame.time.Clock()
+
+running = True
 
 # Discovering and finding the device
 async def scan_for_device():
@@ -35,51 +58,72 @@ async def scan_for_device():
     return None
 
 # Callback function to handle data received by notifications
-def notification_callback(sender: int, data: bytearray):
-    feed = data.hex()
-    print(f"Notification received {feed}")
-    print(data)
-    Xval = int(int(feed[6:8], 16))*8
-    Yval = int(int(feed[4:6], 16))*8
-    click = int(feed[3:4])
-    
-    if click == 1:
-        print("Left")
-    elif click == 2:
-        print("Right")
-    elif click == 4:
-        print("Scroll")
-    else:
-        print("Invalid")
-    
-    print(f"X value {Xval} | Y value {Yval}")
+def notification_callback(sender: int, data: bytearray,):
+    global Xval
+    global Yval
+    # feed = data.decode()
+    feed = struct.unpack('<i', data)[0]
+    # feed_int = int(feed, 16)
+    feed_bin = bin(feed)
 
-    pg.moveTo(Xval,Yval)
+    # print(f"Notification received {feed}")
+    # print(data)
+    click_byte = feed & 15
+    x_byte = ((feed >> 4) & 16383) - 500
+    y_byte = ((feed >> 18) & 16383) - 500  # Masking and bit shifting
 
-    if(click < 4):
+    y_bits = bin(y_byte)
+    x_bits = bin(x_byte)
+
+    # Logging  
+    fh.write(f"{data}   {feed}    {feed_bin}    {x_byte}    {y_byte}        {click_byte} \n")
+    
+    print(f"Received {feed}")
+
+    correction_offset = 655    # Two's compliment correction offset. Decimal equivalant of -1
+
+    Xval += x_byte*0.1
+    Yval += y_byte*0.1 -10
+    
+    print(f"{data}   {feed}    {x_byte}  - {Xval}     {y_byte}  -  {Yval}    {click_byte}")
+
+    mouse = Controller()
+    mouse.position = ((Xval, Yval))
+
+    # for event in pygame.event.get():
+    #     if event.type == pygame.QUIT:
+    #         running = False
+
+    #     if running == False:
+    #         break
+    
+    # window.fill((0,0,0))
+    # pygame.draw.circle(window, (255,255,255), (Xval, Yval), 10)
+    
+    # pygame.display.flip()
+    # clock.tick(60)
+
+    if(click_byte < 4):
         # click the mouse
         time = 1         # time the button clicks
-        if(click == 2):
+        if(click_byte == 2):
             mouse.click(Button.right, time)
-        elif(click == 1):
+        elif(click_byte == 1):
             mouse.click(Button.left, time)
 
-    elif(click == 4):
+    elif(click_byte == 4):
         scrolllength = x
-        pg.scroll(-1*(Yval-500))
-    
+        pg.scroll(-1*(Yval*0.5))
 
-'''
     time_count = 0
 
     while time_count < 10:
         #take the position of the mouse
         pos = mouse.position
-        print(pos)
+        # print(pos)
         
         time_count += 1
-'''                
-
+                
 
 async def interact_with_device(device):
     async with BleakClient(device) as client:
@@ -107,7 +151,7 @@ async def interact_with_device(device):
 
                 # Receive characteristic value as the device notifies for 10 seconds
                 time_count = 0
-                while time_count < 80:
+                while time_count < 60:
                     await asyncio.sleep(1)
                     time_count += 1
 
@@ -116,13 +160,28 @@ async def interact_with_device(device):
                 print("Client Disconnected")
 
 async def main():
+    count = 0
+    timeout = 5
     print("Discovering...")
     device = await scan_for_device()
     if device:
-        await interact_with_device(device)
+        while True:
+            try:
+                await interact_with_device(device)
+            except:
+                if count < timeout:
+                    count +=1
+                    print(f"Attempt {count} failed. Retrying...")
+                    continue
+                else:
+                    print("TIMEOUT. Connection Failed.")
+                    break
     else:
         print("ESP32 device not found.")
 
 asyncio.run(main())
+
+fh.close()
+# pygame.quit()
 
 # is this edit was in my branch
