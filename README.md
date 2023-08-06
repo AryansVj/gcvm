@@ -75,10 +75,9 @@ We value your feedback and suggestions! Feel free to reach out to us through our
 We are a dedicated team of aspiring engineers, working together on the development of the AIRGO VIRTUAL CONTROLLER 1.0,
 Get to know our team members:
 
+- [Chamindu Gunarathna](https://github.com/ChaminduNimantha)
 - [Ishan Bhanuka](https://github.com/IshanBhanuka)
 - [Viraj Ariyawangsha](https://github.com/AryansVj)
-- [Chamindu Gunarathna](https://github.com/ChaminduNimantha)
-
 
 We are committed to continuous innovation and 
 improvement. In the future, we aim to enhance the 
