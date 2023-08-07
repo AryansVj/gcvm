@@ -38,7 +38,7 @@
 To get started with the AIRGO VIRTUAL CONTROLLER 1.0, follow these steps:
 
 1. Connect the device to your computer using the provided USB cable.
-2. Download and install the AIRGO software from our official GitHub repository: [Download Link](https://github.com/AryansVj/gcvm/tree/main/Downloads).
+2. Download AirGosetup-win-1.0.exe and install the AIRGO software from our official GitHub repository: [Download Link](https://github.com/AryansVj/gcvm/tree/main/Downloads).
 3. Follow the setup instructions provided in the user manual for seamless installation.
 4. Enjoy the innovative and intuitive experience of controlling your computer using hand gestures!
 
