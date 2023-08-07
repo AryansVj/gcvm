@@ -23,7 +23,7 @@
 </p>
 <br>
 <p align="left">
-  <img src="https://github.com/AryansVj/gcvm/blob/main/Photos/Logo%20(1).png" width="200" height="100">
+  <img src="https://github.com/AryansVj/gcvm/blob/ishan/Source%20code/GUI/Logo%20light.png" width="200" height="100">
 </p>
 
 ## Features
